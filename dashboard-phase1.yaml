@@ -1,0 +1,512 @@
+title: Home
+views:
+  # --- TAB 1: Home (security + at-a-glance) ---
+  - title: Home
+    path: home
+    icon: mdi:home
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Doorbell
+          - type: picture-entity
+            entity: camera.doorbell_main
+            camera_view: live
+            name: Doorbell
+          # Collapsed by default — click the title bar / chevron to expand.
+          - type: custom:expander-card
+            title: Door & security
+            expanded: false
+            icon: mdi:chevron-down
+            cards:
+              - type: entities
+                entities:
+                  - binary_sensor.doorbell_button_pressed
+                  - binary_sensor.doorbell_door_status
+                  - binary_sensor.doorbell_motion_alarm
+                  - binary_sensor.doorbell_cross_line_alarm
+                  - binary_sensor.doorbell_smart_motion_human
+                  - binary_sensor.doorbell_smart_motion_vehicle
+                  - binary_sensor.doorbell_invite
+                  - binary_sensor.doorbell_call_no_answered
+          # Clips saved by "Doorbell - Tuned Notification" to /config/www/doorbell
+          # (doorbell_YYYYMMDD_HHMMSS.mp4 + thumb_YYYYMMDD_HHMMSS.jpg), listed by
+          # the command_line sensor.doorbell_records. Newest 20 shown.
+          - type: custom:expander-card
+            title: Recorded clips
+            expanded: false
+            icon: mdi:chevron-down
+            cards:
+              - type: markdown
+                content: |-
+                  {%- set raw = state_attr('sensor.doorbell_records', 'records') or [] %}
+                  {%- set ns = namespace(files=[]) %}
+                  {%- for r in raw %}
+                    {%- set f = r if r is string else (r.video or r.file or r.filename or r.name or r.path or '') %}
+                    {%- set f = (f | string).split('/')[-1] %}
+                    {%- if f.startswith('doorbell_') and f.endswith('.mp4') %}{% set ns.files = ns.files + [f] %}{% endif %}
+                  {%- endfor %}
+                  {%- if ns.files %}
+                  {%- for f in (ns.files | unique | sort(reverse=true))[:20] %}
+                  {%- set p = f[:-4].split('_') %}
+                  {%- set d = p[1] %}{% set t = p[2] %}
+                  <a href="/local/doorbell/{{ f }}" target="_blank"><img src="/local/doorbell/thumb_{{ d }}_{{ t }}.jpg" width="96"></a> **{{ d[6:8] }}/{{ d[4:6] }} {{ t[0:2] }}:{{ t[2:4] }}:{{ t[4:6] }}** · [▶️ Play clip](/local/doorbell/{{ f }})
+
+                  {% endfor %}
+                  {%- else %}
+                  No recordings found.
+                  {%- endif %}
+      - type: grid
+        cards:
+          - type: heading
+            heading: Who's home
+          - type: tile
+            entity: person.saulius
+          - type: tile
+            entity: person.sandra
+          - type: weather-forecast
+            entity: weather.forecast_home
+            show_current: true
+            show_forecast: false
+      - type: grid
+        cards:
+          - type: heading
+            heading: Quick actions
+          - type: button
+            name: All lights off
+            icon: mdi:lightbulb-off
+            tap_action:
+              action: call-service
+              service: light.turn_off
+              target:
+                entity_id:
+                  - light.sonoff_100139f4f2
+                  - light.sonoff_100139f4eb
+                  - light.sonoff_100139fd14
+
+  # --- TAB 2: Svetainė (Living/Dining) — template for other rooms ---
+  - title: Svetainė
+    path: svetaine
+    icon: mdi:sofa
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Lighting
+          - type: tile
+            entity: light.sonoff_100139f4f2
+            name: LED apšvietimas
+          - type: tile
+            entity: switch.sonoff_10018b2190_1
+            name: Svetainė
+          - type: tile
+            entity: switch.sonoff_10018b2190_2
+            name: Valgomasis
+      - type: grid
+        cards:
+          - type: heading
+            heading: Curtains
+          - type: tile
+            entity: cover.sonoff_1001839a94
+            name: Užuolaida 1
+            features:
+              - type: cover-open-close
+          - type: tile
+            entity: cover.sonoff_10018b28b2
+            name: Užuolaida 2
+            features:
+              - type: cover-open-close
+      - type: grid
+        cards:
+          - type: heading
+            heading: Heating
+          - type: thermostat
+            entity: climate.svetaine_t_living_room_heating
+          - type: sensor
+            entity: sensor.sonoff_10017ba028_outdoor_temp
+            name: Lauko temperatūra
+            graph: line
+      - type: grid
+        cards:
+          - type: heading
+            heading: Power usage
+          - type: tile
+            entity: sensor.sonoff_10018b2190_power_1
+            name: Svetainė power
+          - type: tile
+            entity: sensor.sonoff_10018b2190_power_2
+            name: Valgomasis power
+
+  # --- TAB 3: Virtuvė (Kitchen) ---
+  - title: Virtuvė
+    path: virtuve
+    icon: mdi:countertop
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Lighting
+          - type: tile
+            entity: switch.sonoff_10018b0a0d_1
+            name: Pagrindinis
+          - type: tile
+            entity: switch.sonoff_10018b0a0d_2
+            name: Stalviršis
+      - type: grid
+        cards:
+          - type: heading
+            heading: Power usage
+          - type: tile
+            entity: sensor.sonoff_10018b0a0d_power_1
+            name: Pagrindinis power
+          - type: tile
+            entity: sensor.sonoff_10018b0a0d_power_2
+            name: Stalviršis power
+
+  # --- TAB 4: Darbo kambarys (Office) ---
+  - title: Darbo kambarys
+    path: darbo-kambarys
+    icon: mdi:desk
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Lighting
+          - type: tile
+            entity: light.sonoff_100139fd14
+            name: LED apšvietimas
+          - type: tile
+            entity: switch.sonoff_10018b24a7_1
+            name: Pagrindinis
+      - type: grid
+        cards:
+          - type: heading
+            heading: Heating
+          - type: thermostat
+            entity: climate.darbo_k_t_work_room_heating
+          - type: sensor
+            entity: sensor.sonoff_1001805a4d_outdoor_temp
+            name: Lauko temperatūra
+            graph: line
+      - type: grid
+        cards:
+          - type: heading
+            heading: Power usage
+          - type: tile
+            entity: sensor.sonoff_10018b24a7_power_1
+            name: Pagrindinis power
+
+  # --- TAB 5: Miegamasis (Bedroom) ---
+  - title: Miegamasis
+    path: miegamasis
+    icon: mdi:bed
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Lighting
+          - type: tile
+            entity: switch.sonoff_10018b28ac_1
+            name: LED
+          - type: tile
+            entity: switch.sonoff_10018b28ac_2
+            name: Pagrindinis
+      - type: grid
+        cards:
+          - type: heading
+            heading: Heating
+          - type: thermostat
+            entity: climate.miegamas_t_bedroom_heating
+          - type: sensor
+            entity: sensor.sonoff_10018059e2_outdoor_temp
+            name: Lauko temperatūra
+            graph: line
+      - type: grid
+        cards:
+          - type: heading
+            heading: Power usage
+          - type: tile
+            entity: sensor.sonoff_10018b28ac_power_1
+            name: LED power
+          - type: tile
+            entity: sensor.sonoff_10018b28ac_power_2
+            name: Pagrindinis power
+
+  # --- TAB 6: Vonia (Bathroom) ---
+  - title: Vonia
+    path: vonia
+    icon: mdi:shower
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Lighting
+          - type: tile
+            entity: light.sonoff_100139f4eb
+            name: LED apšvietimas
+          - type: tile
+            entity: switch.sonoff_10018b27af_1
+            name: Pagrindinis
+      - type: grid
+        cards:
+          - type: heading
+            heading: Heating
+          - type: thermostat
+            entity: climate.vonia_t_bathroom_heating
+      - type: grid
+        cards:
+          - type: heading
+            heading: Power usage
+          - type: tile
+            entity: sensor.sonoff_10018b27af_power_1
+            name: Pagrindinis power
+
+  # --- TAB 7: Terasa (Terrace) ---
+  - title: Terasa
+    path: terasa
+    icon: mdi:umbrella-outline
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Lighting
+          - type: tile
+            entity: switch.sonoff_10018b086a_1
+            name: LED
+          - type: tile
+            entity: switch.sonoff_10018b086a_2
+            name: Pagrindinis
+      - type: grid
+        cards:
+          - type: heading
+            heading: Power usage
+          - type: tile
+            entity: sensor.sonoff_10018b086a_power_1
+            name: LED power
+          - type: tile
+            entity: sensor.sonoff_10018b086a_power_2
+            name: Pagrindinis power
+
+  # --- TAB 8: Tambūras (Entryway + Stairwell) ---
+  - title: Tambūras
+    path: tamburas
+    icon: mdi:door-open
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Tambūras — Lighting
+          - type: tile
+            entity: switch.sonoff_1001556a88_1
+            name: Vidus
+          - type: tile
+            entity: switch.sonoff_1001556a88_2
+            name: Laukas
+      - type: grid
+        cards:
+          - type: heading
+            heading: Tambūras — Power usage
+          - type: tile
+            entity: sensor.sonoff_1001556a88_power_1
+            name: Vidus power
+          - type: tile
+            entity: sensor.sonoff_1001556a88_power_2
+            name: Laukas power
+      - type: grid
+        cards:
+          - type: heading
+            heading: Laiptinė — Lighting
+          - type: tile
+            entity: switch.sonoff_10018b1920_1
+            name: Viršus
+          - type: tile
+            entity: switch.sonoff_10018b1920_2
+            name: Apačia
+      - type: grid
+        cards:
+          - type: heading
+            heading: Laiptinė — Power usage
+          - type: tile
+            entity: sensor.sonoff_10018b1920_power_1
+            name: Viršus power
+          - type: tile
+            entity: sensor.sonoff_10018b1920_power_2
+            name: Apačia power
+
+  # --- TAB 9: Sandėliukas (Storage) ---
+  - title: Sandėliukas
+    path: sandeliukas
+    icon: mdi:archive-outline
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Lighting
+          - type: tile
+            entity: switch.sandeliukas_sonoff_100266e36c_1
+            name: Vidus
+          - type: tile
+            entity: switch.sandeliukas_sonoff_100266e36c_2
+            name: Laukas
+      - type: grid
+        cards:
+          - type: heading
+            heading: Power usage
+          - type: tile
+            entity: sensor.sandeliukas_sonoff_100266e36c_power_1
+            name: Vidus power
+          - type: tile
+            entity: sensor.sandeliukas_sonoff_100266e36c_power_2
+            name: Laukas power
+
+  # --- TAB 10: Katilinė (Boiler room) ---
+  - title: Katilinė
+    path: katiline
+    icon: mdi:water-boiler
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Boiler controls
+          - type: tile
+            entity: switch.sonoff_1001d5157a_1
+            name: Katilas
+          - type: tile
+            entity: switch.sonoff_1001d5157a_2
+            name: Channel 2
+          - type: tile
+            entity: switch.sonoff_1001d5157a_3
+            name: Channel 3
+          - type: tile
+            entity: switch.sonoff_1001d5157a_4
+            name: Channel 4
+          - type: tile
+            entity: switch.sonoff_10017d282f
+            name: Katilinė (light/power)
+
+  # --- TAB 11: Power (Sonoff + Wallbox) ---
+  - title: Power
+    path: power
+    icon: mdi:flash
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Wallbox EV charger — status & control
+          - type: tile
+            entity: sensor.wallbox_pulsar_max_ss_status_description
+            name: Status
+          - type: tile
+            entity: switch.wallbox_pulsar_max_ss_pause_resume
+            name: Pause / resume
+          - type: tile
+            entity: lock.wallbox_pulsar_max_ss_lock
+            name: Charger lock
+          - type: tile
+            entity: select.wallbox_pulsar_max_ss_solar_charging
+            name: Charging mode
+          - type: tile
+            entity: number.wallbox_pulsar_max_ss_maximum_charging_current
+            name: Max charging current
+            features:
+              - type: numeric-input
+          - type: button
+            entity: button.outside_wallbox_pulsar_max_ss_resume_schedule
+            name: Resume schedule
+      - type: grid
+        cards:
+          - type: heading
+            heading: Wallbox — current session
+          - type: tile
+            entity: sensor.wallbox_pulsar_max_ss_charging_power
+            name: Charging power
+          - type: tile
+            entity: sensor.wallbox_pulsar_max_ss_added_energy
+            name: Added energy
+          - type: tile
+            entity: sensor.wallbox_pulsar_max_ss_added_range
+            name: Added range
+          - type: tile
+            entity: sensor.wallbox_pulsar_max_ss_cost
+            name: Session cost
+      - type: grid
+        cards:
+          - type: heading
+            heading: Sonoff — room power
+          - type: tile
+            entity: sensor.sonoff_10018b2190_power_1
+            name: Svetainė
+          - type: tile
+            entity: sensor.sonoff_10018b2190_power_2
+            name: Valgomasis
+          - type: tile
+            entity: sensor.sonoff_10018b0a0d_power_1
+            name: Virtuvė — Pagrindinis
+          - type: tile
+            entity: sensor.sonoff_10018b0a0d_power_2
+            name: Virtuvė — Stalviršis
+          - type: tile
+            entity: sensor.sonoff_10018b28ac_power_1
+            name: Miegamasis — LED
+          - type: tile
+            entity: sensor.sonoff_10018b28ac_power_2
+            name: Miegamasis — Pagrindinis
+          - type: tile
+            entity: sensor.sonoff_10018b27af_power_1
+            name: Vonia — Pagrindinis
+          - type: tile
+            entity: sensor.sonoff_10018b27af_power_2
+            name: Vonia — LED
+          - type: tile
+            entity: sensor.sonoff_10018b24a7_power_1
+            name: Darbo k. — Pagrindinis
+          - type: tile
+            entity: sensor.sonoff_10018b24a7_power_2
+            name: Darbo k. — LED
+          - type: tile
+            entity: sensor.sonoff_10018b086a_power_1
+            name: Terasa — LED
+          - type: tile
+            entity: sensor.sonoff_10018b086a_power_2
+            name: Terasa — Pagrindinis
+          - type: tile
+            entity: sensor.sonoff_1001556a88_power_1
+            name: Tambūras — Vidus
+          - type: tile
+            entity: sensor.sonoff_1001556a88_power_2
+            name: Tambūras — Laukas
+          - type: tile
+            entity: sensor.sonoff_10018b1920_power_1
+            name: Laiptinė — Viršus
+          - type: tile
+            entity: sensor.sonoff_10018b1920_power_2
+            name: Laiptinė — Apačia
+          - type: tile
+            entity: sensor.sandeliukas_sonoff_100266e36c_power_1
+            name: Sandėliukas — Vidus
+          - type: tile
+            entity: sensor.sandeliukas_sonoff_100266e36c_power_2
+            name: Sandėliukas — Laukas
+          - type: tile
+            entity: sensor.sonoff_1001839a94_power_1
+            name: Užuolaida 1 — ch1
+          - type: tile
+            entity: sensor.sonoff_1001839a94_power_2
+            name: Užuolaida 1 — ch2
+          - type: tile
+            entity: sensor.sonoff_10018b28b2_power_1
+            name: Užuolaida 2 — ch1
+          - type: tile
+            entity: sensor.sonoff_10018b28b2_power_2
+            name: Užuolaida 2 — ch2

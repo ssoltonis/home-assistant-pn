@@ -1,0 +1,22 @@
+{
+	// Home Assistant Model Context Protocol Server connection.
+	// The token is never stored in this file — VS Code prompts for it
+	// once and keeps it in secret storage.
+	"inputs": [
+		{
+			"id": "ha_token",
+			"type": "promptString",
+			"description": "Home Assistant long-lived access token",
+			"password": true
+		}
+	],
+	"servers": {
+		"home-assistant": {
+			"type": "http",
+			"url": "http://homeassistant.local:8123/api/mcp",
+			"headers": {
+				"Authorization": "Bearer ${input:ha_token}"
+			}
+		}
+	}
+}
