@@ -98,12 +98,42 @@ views:
           - type: tile
             entity: light.sonoff_100139f4f2
             name: LED apšvietimas
-          - type: tile
-            entity: switch.sonoff_10018b2190_1
-            name: Svetainė
-          - type: tile
-            entity: switch.sonoff_10018b2190_2
-            name: Valgomasis
+          - type: vertical-stack
+            cards:
+              - type: button
+                entity: switch.sonoff_10018b2190_1
+                name: Svetainė
+                icon: mdi:lightbulb
+                show_state: true
+                tap_action:
+                  action: toggle
+              - type: conditional
+                conditions:
+                  - condition: state
+                    entity: switch.sonoff_10018b2190_1
+                    state: "on"
+                card:
+                  type: tile
+                  entity: sensor.sonoff_10018b2190_power_1
+                  name: Svetainė power
+          - type: vertical-stack
+            cards:
+              - type: button
+                entity: switch.sonoff_10018b2190_2
+                name: Valgomasis
+                icon: mdi:lightbulb
+                show_state: true
+                tap_action:
+                  action: toggle
+              - type: conditional
+                conditions:
+                  - condition: state
+                    entity: switch.sonoff_10018b2190_2
+                    state: "on"
+                card:
+                  type: tile
+                  entity: sensor.sonoff_10018b2190_power_2
+                  name: Valgomasis power
       - type: grid
         cards:
           - type: heading
@@ -128,17 +158,6 @@ views:
             entity: sensor.sonoff_10017ba028_outdoor_temp
             name: Lauko temperatūra
             graph: line
-      - type: grid
-        cards:
-          - type: heading
-            heading: Power usage
-          - type: tile
-            entity: sensor.sonoff_10018b2190_power_1
-            name: Svetainė power
-          - type: tile
-            entity: sensor.sonoff_10018b2190_power_2
-            name: Valgomasis power
-
   # --- TAB 3: Virtuvė (Kitchen) ---
   - title: Virtuvė
     path: virtuve
