@@ -1,0 +1,34 @@
+Doorbell recorded clips card
+
+Installation
+1. Copy doorbell-records-card.js to /config/www/doorbell-records-card.js
+   on the Home Assistant server.
+2. In Settings > Dashboards > Resources (enable Advanced Mode in your
+   profile if needed), add /local/doorbell-records-card.js?v=1 with
+   resource type JavaScript Module.
+   For YAML-managed resources, add this entry to the existing
+   lovelace.resources list in configuration.yaml:
+     - url: /local/doorbell-records-card.js?v=1
+       type: module
+3. Apply dashboard-phase1.yaml to your dashboard and reload the browser
+   or Companion App frontend.
+
+Behavior
+- Shows ten clips per page, newest first, with Previous/Next controls.
+- Page selection belongs to each card instance, not a shared HA helper.
+  Reloading the dashboard resets to page one.
+- All records are reachable; the last page can contain fewer than ten.
+- If cleanup reduces the page count, selection clamps to the last page.
+- Uses sensor.doorbell_records and its records attribute, accepting
+  filename strings or objects containing video/file_name paths.
+- Both thumbnail and Play clip are explicit new-tab links, avoiding
+  same-origin link interception by Home Assistant's internal router.
+- MP4s remain under /config/www/doorbell, served via /local/doorbell.
+  These URLs do not require HA authentication; this change does not
+  alter recording storage, notifications or retention.
+
+Validation
+Run: node doorbell-records-card.test.cjs
+After installation, check pages 1, 2 and the final page, and play a
+clip using both its thumbnail and Play clip in your target browser/app.
+On updates, replace the JS file and bump the resource's v query value.

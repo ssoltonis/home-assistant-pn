@@ -32,31 +32,16 @@ views:
                   - binary_sensor.doorbell_call_no_answered
           # Clips saved by "Doorbell - Tuned Notification" to /config/www/doorbell
           # (doorbell_YYYYMMDD_HHMMSS.mp4 + thumb_YYYYMMDD_HHMMSS.jpg), listed by
-          # the command_line sensor.doorbell_records. Newest 20 shown.
+          # the command_line sensor.doorbell_records. Ten clips per browser-local page.
+          # Load /local/doorbell-records-card.js as a JavaScript module resource.
           - type: custom:expander-card
             title: Recorded clips
             expanded: false
             icon: mdi:chevron-down
             cards:
-              - type: markdown
-                content: |-
-                  {%- set raw = state_attr('sensor.doorbell_records', 'records') or [] %}
-                  {%- set ns = namespace(files=[]) %}
-                  {%- for r in raw %}
-                    {%- set f = r if r is string else (r.video or r.file or r.filename or r.name or r.path or '') %}
-                    {%- set f = (f | string).split('/')[-1] %}
-                    {%- if f.startswith('doorbell_') and f.endswith('.mp4') %}{% set ns.files = ns.files + [f] %}{% endif %}
-                  {%- endfor %}
-                  {%- if ns.files %}
-                  {%- for f in (ns.files | unique | sort(reverse=true))[:20] %}
-                  {%- set p = f[:-4].split('_') %}
-                  {%- set d = p[1] %}{% set t = p[2] %}
-                  <a href="/local/doorbell/{{ f }}" target="_blank"><img src="/local/doorbell/thumb_{{ d }}_{{ t }}.jpg" width="96"></a> **{{ d[6:8] }}/{{ d[4:6] }} {{ t[0:2] }}:{{ t[2:4] }}:{{ t[4:6] }}** · [▶️ Play clip](/local/doorbell/{{ f }})
-
-                  {% endfor %}
-                  {%- else %}
-                  No recordings found.
-                  {%- endif %}
+              - type: custom:doorbell-records-card
+                entity: sensor.doorbell_records
+                page_size: 10
       - type: grid
         cards:
           - type: heading
