@@ -1,0 +1,56 @@
+Compact light tiles with inline power
+
+Installation
+1. Copy power-light-tile-card.js to /config/www/power-light-tile-card.js
+   on the Home Assistant server.
+2. In Settings > Dashboards > Resources, add
+   /local/power-light-tile-card.js?v=3 as a JavaScript Module.
+   If already installed, replace the JS file and update the existing URL.
+   For YAML-managed resources, add under lovelace.resources in
+   /config/configuration.yaml (not in the dashboard YAML):
+     - url: /local/power-light-tile-card.js?v=3
+       type: module
+3. Apply dashboard-phase1.yaml and fully reload the dashboard/browser.
+   After a resource URL change, use Ctrl+F5 or close/reopen the Companion App.
+
+Behavior
+- All individual lights use the native Tile card inside a compact wrapper.
+- The "1st floor" view (path: 1st-floor) combines Svetainė, Virtuvė,
+  Tambūras (including Laiptinė) and Katilinė. Lighting is grouped into
+  Svetainė; Virtuvė, Valgomasis; Tambūras; and Laiptinė sections.
+  The existing Katilinė light remains in its own section.
+- The "2nd floor" view (path: 2nd-floor) contains only lighting, grouped
+  into Darbo kambarys, Miegamasis and Vonia sections.
+- All four room heating controls and boiler controls are in Comfort
+  (path: comfort). All Lauko temperatūra cards are removed.
+- Outside (path: outside) groups Terasa and Sandėliukas lighting.
+- Tab order: Home, 1st floor, 2nd floor, Outside, Comfort, Power.
+  All tabs show both their icon and title.
+- Home uses a full-width doorbell row, followed by Sensors and Recorded
+  clips side by side where two sections fit, or stacked on narrow screens.
+  Weather shows seven daily forecast slots, subject to provider availability.
+- Svetainė LED uses an explicit LED strip icon and amber active color.
+- Standalone room Power usage sections and Sonoff room power are removed.
+  Power readings remain inline on lights; Wallbox session details remain.
+- Boiler controls and All lights off are unchanged.
+- Native icon toggle and card more-info actions remain unchanged.
+- Live power and the sensor's unit appear on the right only while that
+  tile's light/switch is on. Off/unknown/unavailable states hide the value.
+- power_entity is optional. Omit it for lights with no confirmed sensor:
+  Svetainė LED and Katilinė (light/power) currently have no sensor mapped.
+- Missing, unknown, unavailable or nonnumeric power readings show an
+  explicit status rather than a misleading zero while the switch is on.
+- No third-party card dependency is needed.
+
+Validation
+Run: node power-light-tile-card.test.cjs
+After installation, check light tiles with each light on and off, verify
+live power updates, and check icon toggle/card more-info in your browser.
+On updates, replace the JS file and bump the resource's v query value.
+
+Troubleshooting
+If the LED tile shows "Power light tile requires entity and power_entity",
+the browser is still running the original card version. The current card
+requires only entity and accepts LED lights without a power sensor.
+Replace the server JS file with this version, update the existing resource
+URL to ?v=3 (do not add a second resource), and fully reload the browser.

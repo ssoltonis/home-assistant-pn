@@ -4,9 +4,24 @@ views:
   - title: Home
     path: home
     icon: mdi:home
+    show_icon_and_title: true
     type: sections
+    max_columns: 2
     sections:
       - type: grid
+        column_span: 2
+        cards:
+          - type: weather-forecast
+            entity: weather.forecast_home
+            show_current: true
+            show_forecast: true
+            forecast_type: daily
+            forecast_slots: 7
+            grid_options:
+              columns: full
+              rows: auto
+      - type: grid
+        column_span: 2
         cards:
           - type: heading
             heading: Doorbell
@@ -14,9 +29,14 @@ views:
             entity: camera.doorbell_main
             camera_view: live
             name: Doorbell
+            grid_options:
+              columns: full
+              rows: auto
+      - type: grid
+        cards:
           # Collapsed by default — click the title bar / chevron to expand.
           - type: custom:expander-card
-            title: Door & security
+            title: Sensors
             expanded: false
             icon: mdi:chevron-down
             cards:
@@ -30,6 +50,8 @@ views:
                   - binary_sensor.doorbell_smart_motion_vehicle
                   - binary_sensor.doorbell_invite
                   - binary_sensor.doorbell_call_no_answered
+      - type: grid
+        cards:
           # Clips saved by "Doorbell - Tuned Notification" to /config/www/doorbell
           # (doorbell_YYYYMMDD_HHMMSS.mp4 + thumb_YYYYMMDD_HHMMSS.jpg), listed by
           # the command_line sensor.doorbell_records. Ten clips per browser-local page.
@@ -50,10 +72,6 @@ views:
             entity: person.saulius
           - type: tile
             entity: person.sandra
-          - type: weather-forecast
-            entity: weather.forecast_home
-            show_current: true
-            show_forecast: false
       - type: grid
         cards:
           - type: heading
@@ -70,59 +88,80 @@ views:
                   - light.sonoff_100139f4eb
                   - light.sonoff_100139fd14
 
-  # --- TAB 2: Svetainė (Living/Dining) — template for other rooms ---
-  - title: Svetainė
-    path: svetaine
-    icon: mdi:sofa
+  # --- 1st floor: living/dining, kitchen, entryway/stairwell and boiler room ---
+  - title: 1st floor
+    path: 1st-floor
+    icon: mdi:home-floor-1
+    show_icon_and_title: true
     type: sections
     sections:
       - type: grid
         cards:
           - type: heading
-            heading: Lighting
-          - type: tile
+            heading: Svetainė
+          # Load /local/power-light-tile-card.js?v=3 as a JavaScript module resource.
+          - type: custom:power-light-tile-card
             entity: light.sonoff_100139f4f2
-            name: LED apšvietimas
-          - type: vertical-stack
-            cards:
-              - type: button
-                entity: switch.sonoff_10018b2190_1
-                name: Svetainė
-                icon: mdi:lightbulb
-                show_state: true
-                tap_action:
-                  action: toggle
-              - type: conditional
-                conditions:
-                  - condition: state
-                    entity: switch.sonoff_10018b2190_1
-                    state: "on"
-                card:
-                  type: tile
-                  entity: sensor.sonoff_10018b2190_power_1
-                  name: Svetainė power
-          - type: vertical-stack
-            cards:
-              - type: button
-                entity: switch.sonoff_10018b2190_2
-                name: Valgomasis
-                icon: mdi:lightbulb
-                show_state: true
-                tap_action:
-                  action: toggle
-              - type: conditional
-                conditions:
-                  - condition: state
-                    entity: switch.sonoff_10018b2190_2
-                    state: "on"
-                card:
-                  type: tile
-                  entity: sensor.sonoff_10018b2190_power_2
-                  name: Valgomasis power
+            name: LED
+            icon: mdi:led-strip-variant
+            color: amber
+          - type: custom:power-light-tile-card
+            entity: switch.sonoff_10018b2190_1
+            power_entity: sensor.sonoff_10018b2190_power_1
+            name: Pagrindinis
+            icon: mdi:lightbulb
       - type: grid
         cards:
           - type: heading
-            heading: Curtains
+            heading: Virtuvė, Valgomasis
+          - type: custom:power-light-tile-card
+            entity: switch.sonoff_10018b0a0d_1
+            power_entity: sensor.sonoff_10018b0a0d_power_1
+            name: Pagrindinis
+          - type: custom:power-light-tile-card
+            entity: switch.sonoff_10018b0a0d_2
+            power_entity: sensor.sonoff_10018b0a0d_power_2
+            name: Stalviršis
+          - type: custom:power-light-tile-card
+            entity: switch.sonoff_10018b2190_2
+            power_entity: sensor.sonoff_10018b2190_power_2
+            name: Valgomasis
+            icon: mdi:lightbulb
+      - type: grid
+        cards:
+          - type: heading
+            heading: Tambūras
+          - type: custom:power-light-tile-card
+            entity: switch.sonoff_1001556a88_1
+            power_entity: sensor.sonoff_1001556a88_power_1
+            name: Vidus
+          - type: custom:power-light-tile-card
+            entity: switch.sonoff_1001556a88_2
+            power_entity: sensor.sonoff_1001556a88_power_2
+            name: Laukas
+      - type: grid
+        cards:
+          - type: heading
+            heading: Laiptinė
+          - type: custom:power-light-tile-card
+            entity: switch.sonoff_10018b1920_2
+            power_entity: sensor.sonoff_10018b1920_power_2
+            name: Apačia
+          - type: custom:power-light-tile-card
+            entity: switch.sonoff_10018b1920_1
+            power_entity: sensor.sonoff_10018b1920_power_1
+            name: Viršus
+      - type: grid
+        cards:
+          - type: heading
+            heading: Katilinė
+          - type: custom:power-light-tile-card
+            entity: switch.sonoff_10017d282f
+            name: Katilinė (light/power)
+      - type: grid
+        cards:
+          - type: heading
+            heading: Svetainė — Curtains
           - type: tile
             entity: cover.sonoff_1001839a94
             name: Užuolaida 1
@@ -133,275 +172,126 @@ views:
             name: Užuolaida 2
             features:
               - type: cover-open-close
+  # --- 2nd floor: office, bedroom and bathroom lighting ---
+  - title: 2nd floor
+    path: 2nd-floor
+    icon: mdi:home-floor-2
+    show_icon_and_title: true
+    type: sections
+    sections:
       - type: grid
         cards:
           - type: heading
-            heading: Heating
+            heading: Darbo kambarys
+          - type: custom:power-light-tile-card
+            entity: light.sonoff_100139fd14
+            power_entity: sensor.sonoff_10018b24a7_power_2
+            name: LED apšvietimas
+          - type: custom:power-light-tile-card
+            entity: switch.sonoff_10018b24a7_1
+            power_entity: sensor.sonoff_10018b24a7_power_1
+            name: Pagrindinis
+      - type: grid
+        cards:
+          - type: heading
+            heading: Miegamasis
+          - type: custom:power-light-tile-card
+            entity: switch.sonoff_10018b28ac_1
+            power_entity: sensor.sonoff_10018b28ac_power_1
+            name: LED
+          - type: custom:power-light-tile-card
+            entity: switch.sonoff_10018b28ac_2
+            power_entity: sensor.sonoff_10018b28ac_power_2
+            name: Pagrindinis
+      - type: grid
+        cards:
+          - type: heading
+            heading: Vonia
+          - type: custom:power-light-tile-card
+            entity: light.sonoff_100139f4eb
+            power_entity: sensor.sonoff_10018b27af_power_2
+            name: LED apšvietimas
+          - type: custom:power-light-tile-card
+            entity: switch.sonoff_10018b27af_1
+            power_entity: sensor.sonoff_10018b27af_power_1
+            name: Pagrindinis
+  # --- Outside: terrace and storage lighting ---
+  - title: Outside
+    path: outside
+    icon: mdi:tree-outline
+    show_icon_and_title: true
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Terasa
+          - type: custom:power-light-tile-card
+            entity: switch.sonoff_10018b086a_1
+            power_entity: sensor.sonoff_10018b086a_power_1
+            name: LED
+          - type: custom:power-light-tile-card
+            entity: switch.sonoff_10018b086a_2
+            power_entity: sensor.sonoff_10018b086a_power_2
+            name: Pagrindinis
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Sandėliukas
+          - type: custom:power-light-tile-card
+            entity: switch.sandeliukas_sonoff_100266e36c_1
+            power_entity: sensor.sandeliukas_sonoff_100266e36c_power_1
+            name: Vidus
+          - type: custom:power-light-tile-card
+            entity: switch.sandeliukas_sonoff_100266e36c_2
+            power_entity: sensor.sandeliukas_sonoff_100266e36c_power_2
+            name: Laukas
+
+  # --- Comfort (all room heating and boiler controls) ---
+  - title: Comfort
+    path: comfort
+    icon: mdi:thermostat
+    show_icon_and_title: true
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Svetainė — Heating
           - type: thermostat
             entity: climate.svetaine_t_living_room_heating
-          - type: sensor
-            entity: sensor.sonoff_10017ba028_outdoor_temp
-            name: Lauko temperatūra
-            graph: line
-  # --- TAB 3: Virtuvė (Kitchen) ---
-  - title: Virtuvė
-    path: virtuve
-    icon: mdi:countertop
-    type: sections
-    sections:
       - type: grid
         cards:
           - type: heading
-            heading: Lighting
-          - type: tile
-            entity: switch.sonoff_10018b0a0d_1
-            name: Pagrindinis
-          - type: tile
-            entity: switch.sonoff_10018b0a0d_2
-            name: Stalviršis
-      - type: grid
-        cards:
-          - type: heading
-            heading: Power usage
-          - type: tile
-            entity: sensor.sonoff_10018b0a0d_power_1
-            name: Pagrindinis power
-          - type: tile
-            entity: sensor.sonoff_10018b0a0d_power_2
-            name: Stalviršis power
-
-  # --- TAB 4: Darbo kambarys (Office) ---
-  - title: Darbo kambarys
-    path: darbo-kambarys
-    icon: mdi:desk
-    type: sections
-    sections:
-      - type: grid
-        cards:
-          - type: heading
-            heading: Lighting
-          - type: tile
-            entity: light.sonoff_100139fd14
-            name: LED apšvietimas
-          - type: tile
-            entity: switch.sonoff_10018b24a7_1
-            name: Pagrindinis
-      - type: grid
-        cards:
-          - type: heading
-            heading: Heating
+            heading: Darbo kambarys — Heating
           - type: thermostat
             entity: climate.darbo_k_t_work_room_heating
-          - type: sensor
-            entity: sensor.sonoff_1001805a4d_outdoor_temp
-            name: Lauko temperatūra
-            graph: line
       - type: grid
         cards:
           - type: heading
-            heading: Power usage
-          - type: tile
-            entity: sensor.sonoff_10018b24a7_power_1
-            name: Pagrindinis power
-
-  # --- TAB 5: Miegamasis (Bedroom) ---
-  - title: Miegamasis
-    path: miegamasis
-    icon: mdi:bed
-    type: sections
-    sections:
-      - type: grid
-        cards:
-          - type: heading
-            heading: Lighting
-          - type: tile
-            entity: switch.sonoff_10018b28ac_1
-            name: LED
-          - type: tile
-            entity: switch.sonoff_10018b28ac_2
-            name: Pagrindinis
-      - type: grid
-        cards:
-          - type: heading
-            heading: Heating
+            heading: Miegamasis — Heating
           - type: thermostat
             entity: climate.miegamas_t_bedroom_heating
-          - type: sensor
-            entity: sensor.sonoff_10018059e2_outdoor_temp
-            name: Lauko temperatūra
-            graph: line
       - type: grid
         cards:
           - type: heading
-            heading: Power usage
-          - type: tile
-            entity: sensor.sonoff_10018b28ac_power_1
-            name: LED power
-          - type: tile
-            entity: sensor.sonoff_10018b28ac_power_2
-            name: Pagrindinis power
-
-  # --- TAB 6: Vonia (Bathroom) ---
-  - title: Vonia
-    path: vonia
-    icon: mdi:shower
-    type: sections
-    sections:
-      - type: grid
-        cards:
-          - type: heading
-            heading: Lighting
-          - type: tile
-            entity: light.sonoff_100139f4eb
-            name: LED apšvietimas
-          - type: tile
-            entity: switch.sonoff_10018b27af_1
-            name: Pagrindinis
-      - type: grid
-        cards:
-          - type: heading
-            heading: Heating
+            heading: Vonia — Heating
           - type: thermostat
             entity: climate.vonia_t_bathroom_heating
       - type: grid
         cards:
           - type: heading
-            heading: Power usage
-          - type: tile
-            entity: sensor.sonoff_10018b27af_power_1
-            name: Pagrindinis power
-
-  # --- TAB 7: Terasa (Terrace) ---
-  - title: Terasa
-    path: terasa
-    icon: mdi:umbrella-outline
-    type: sections
-    sections:
-      - type: grid
-        cards:
-          - type: heading
-            heading: Lighting
-          - type: tile
-            entity: switch.sonoff_10018b086a_1
-            name: LED
-          - type: tile
-            entity: switch.sonoff_10018b086a_2
-            name: Pagrindinis
-      - type: grid
-        cards:
-          - type: heading
-            heading: Power usage
-          - type: tile
-            entity: sensor.sonoff_10018b086a_power_1
-            name: LED power
-          - type: tile
-            entity: sensor.sonoff_10018b086a_power_2
-            name: Pagrindinis power
-
-  # --- TAB 8: Tambūras (Entryway + Stairwell) ---
-  - title: Tambūras
-    path: tamburas
-    icon: mdi:door-open
-    type: sections
-    sections:
-      - type: grid
-        cards:
-          - type: heading
-            heading: Tambūras — Lighting
-          - type: tile
-            entity: switch.sonoff_1001556a88_1
-            name: Vidus
-          - type: tile
-            entity: switch.sonoff_1001556a88_2
-            name: Laukas
-      - type: grid
-        cards:
-          - type: heading
-            heading: Tambūras — Power usage
-          - type: tile
-            entity: sensor.sonoff_1001556a88_power_1
-            name: Vidus power
-          - type: tile
-            entity: sensor.sonoff_1001556a88_power_2
-            name: Laukas power
-      - type: grid
-        cards:
-          - type: heading
-            heading: Laiptinė — Lighting
-          - type: tile
-            entity: switch.sonoff_10018b1920_1
-            name: Viršus
-          - type: tile
-            entity: switch.sonoff_10018b1920_2
-            name: Apačia
-      - type: grid
-        cards:
-          - type: heading
-            heading: Laiptinė — Power usage
-          - type: tile
-            entity: sensor.sonoff_10018b1920_power_1
-            name: Viršus power
-          - type: tile
-            entity: sensor.sonoff_10018b1920_power_2
-            name: Apačia power
-
-  # --- TAB 9: Sandėliukas (Storage) ---
-  - title: Sandėliukas
-    path: sandeliukas
-    icon: mdi:archive-outline
-    type: sections
-    sections:
-      - type: grid
-        cards:
-          - type: heading
-            heading: Lighting
-          - type: tile
-            entity: switch.sandeliukas_sonoff_100266e36c_1
-            name: Vidus
-          - type: tile
-            entity: switch.sandeliukas_sonoff_100266e36c_2
-            name: Laukas
-      - type: grid
-        cards:
-          - type: heading
-            heading: Power usage
-          - type: tile
-            entity: sensor.sandeliukas_sonoff_100266e36c_power_1
-            name: Vidus power
-          - type: tile
-            entity: sensor.sandeliukas_sonoff_100266e36c_power_2
-            name: Laukas power
-
-  # --- TAB 10: Katilinė (Boiler room) ---
-  - title: Katilinė
-    path: katiline
-    icon: mdi:water-boiler
-    type: sections
-    sections:
-      - type: grid
-        cards:
-          - type: heading
-            heading: Boiler controls
+            heading: Katilinė — Boiler controls
           - type: tile
             entity: switch.sonoff_1001d5157a_1
             name: Katilas
-          - type: tile
-            entity: switch.sonoff_1001d5157a_2
-            name: Channel 2
-          - type: tile
-            entity: switch.sonoff_1001d5157a_3
-            name: Channel 3
-          - type: tile
-            entity: switch.sonoff_1001d5157a_4
-            name: Channel 4
-          - type: tile
-            entity: switch.sonoff_10017d282f
-            name: Katilinė (light/power)
 
-  # --- TAB 11: Power (Sonoff + Wallbox) ---
+  # --- Power (Wallbox) ---
   - title: Power
     path: power
     icon: mdi:flash
+    show_icon_and_title: true
     type: sections
     sections:
       - type: grid
@@ -444,73 +334,3 @@ views:
           - type: tile
             entity: sensor.wallbox_pulsar_max_ss_cost
             name: Session cost
-      - type: grid
-        cards:
-          - type: heading
-            heading: Sonoff — room power
-          - type: tile
-            entity: sensor.sonoff_10018b2190_power_1
-            name: Svetainė
-          - type: tile
-            entity: sensor.sonoff_10018b2190_power_2
-            name: Valgomasis
-          - type: tile
-            entity: sensor.sonoff_10018b0a0d_power_1
-            name: Virtuvė — Pagrindinis
-          - type: tile
-            entity: sensor.sonoff_10018b0a0d_power_2
-            name: Virtuvė — Stalviršis
-          - type: tile
-            entity: sensor.sonoff_10018b28ac_power_1
-            name: Miegamasis — LED
-          - type: tile
-            entity: sensor.sonoff_10018b28ac_power_2
-            name: Miegamasis — Pagrindinis
-          - type: tile
-            entity: sensor.sonoff_10018b27af_power_1
-            name: Vonia — Pagrindinis
-          - type: tile
-            entity: sensor.sonoff_10018b27af_power_2
-            name: Vonia — LED
-          - type: tile
-            entity: sensor.sonoff_10018b24a7_power_1
-            name: Darbo k. — Pagrindinis
-          - type: tile
-            entity: sensor.sonoff_10018b24a7_power_2
-            name: Darbo k. — LED
-          - type: tile
-            entity: sensor.sonoff_10018b086a_power_1
-            name: Terasa — LED
-          - type: tile
-            entity: sensor.sonoff_10018b086a_power_2
-            name: Terasa — Pagrindinis
-          - type: tile
-            entity: sensor.sonoff_1001556a88_power_1
-            name: Tambūras — Vidus
-          - type: tile
-            entity: sensor.sonoff_1001556a88_power_2
-            name: Tambūras — Laukas
-          - type: tile
-            entity: sensor.sonoff_10018b1920_power_1
-            name: Laiptinė — Viršus
-          - type: tile
-            entity: sensor.sonoff_10018b1920_power_2
-            name: Laiptinė — Apačia
-          - type: tile
-            entity: sensor.sandeliukas_sonoff_100266e36c_power_1
-            name: Sandėliukas — Vidus
-          - type: tile
-            entity: sensor.sandeliukas_sonoff_100266e36c_power_2
-            name: Sandėliukas — Laukas
-          - type: tile
-            entity: sensor.sonoff_1001839a94_power_1
-            name: Užuolaida 1 — ch1
-          - type: tile
-            entity: sensor.sonoff_1001839a94_power_2
-            name: Užuolaida 1 — ch2
-          - type: tile
-            entity: sensor.sonoff_10018b28b2_power_1
-            name: Užuolaida 2 — ch1
-          - type: tile
-            entity: sensor.sonoff_10018b28b2_power_2
-            name: Užuolaida 2 — ch2

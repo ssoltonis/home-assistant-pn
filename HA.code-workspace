@@ -4,5 +4,20 @@
 			"path": "."
 		}
 	],
-	"settings": {}
+	"settings": {
+		"chat.tools.terminal.autoApprove": {
+			"/^python -c \"import yaml; print\\('PyYAML available'\\)\"$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^python -c \"import yaml; from pathlib import Path; data=yaml\\.safe_load\\(Path\\('dashboard-phase1\\.yaml'\\)\\.read_text\\(encoding='utf-8'\\)\\); cards=next\\(v for v in data\\['views'\\] if v\\['path'\\]=='svetaine'\\)\\['sections'\\]\\[0\\]\\['cards'\\]; tiles=\\[c for c in cards if c\\['type'\\]=='custom:power-light-tile-card'\\]; assert len\\(tiles\\)==2; assert \\[\\(c\\['entity'\\], c\\['power_entity'\\]\\) for c in tiles\\]==\\[\\('switch\\.sonoff_10018b2190_1','sensor\\.sonoff_10018b2190_power_1'\\),\\('switch\\.sonoff_10018b2190_2','sensor\\.sonoff_10018b2190_power_2'\\)\\]; assert all\\(c\\['type'\\] not in \\('button','vertical-stack'\\) for c in cards\\); print\\('Passed: YAML parsing, two compact controls and correct switch/power pairings'\\)\"; git --no-pager diff --check$/": {
+				"approve": true,
+				"matchCommandLine": true
+			},
+			"/^node --check power-light-tile-card\\.js; if \\(\\$LASTEXITCODE -eq 0\\) \\{ node power-light-tile-card\\.test\\.cjs \\}; git --no-pager status --short$/": {
+				"approve": true,
+				"matchCommandLine": true
+			}
+		}
+	}
 }
