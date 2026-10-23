@@ -25,13 +25,91 @@ views:
         cards:
           - type: heading
             heading: Doorbell
-          - type: picture-entity
-            entity: camera.doorbell_main
+          # Live view with smart-motion indicators: icons turn yellow while the
+          # matching sensor is "on", grey otherwise (incl. unavailable).
+          - type: picture-elements
+            camera_image: camera.doorbell_main
             camera_view: live
-            name: Doorbell
             grid_options:
               columns: full
               rows: auto
+            elements:
+              - type: conditional
+                conditions:
+                  - entity: binary_sensor.doorbell_smart_motion_human
+                    state: "on"
+                elements:
+                  - type: icon
+                    icon: mdi:walk
+                    title: Human detected
+                    tap_action:
+                      action: more-info
+                      entity: binary_sensor.doorbell_smart_motion_human
+                    style:
+                      top: 8%
+                      left: 6%
+                      color: "#FFD600"
+                      "--mdc-icon-size": 32px
+                      background: rgba(0, 0, 0, 0.45)
+                      border-radius: 50%
+                      padding: 4px
+              - type: conditional
+                conditions:
+                  - entity: binary_sensor.doorbell_smart_motion_human
+                    state_not: "on"
+                elements:
+                  - type: icon
+                    icon: mdi:walk
+                    title: No human motion
+                    tap_action:
+                      action: more-info
+                      entity: binary_sensor.doorbell_smart_motion_human
+                    style:
+                      top: 8%
+                      left: 6%
+                      color: "#9E9E9E"
+                      "--mdc-icon-size": 32px
+                      background: rgba(0, 0, 0, 0.45)
+                      border-radius: 50%
+                      padding: 4px
+              - type: conditional
+                conditions:
+                  - entity: binary_sensor.doorbell_smart_motion_vehicle
+                    state: "on"
+                elements:
+                  - type: icon
+                    icon: mdi:car
+                    title: Vehicle detected
+                    tap_action:
+                      action: more-info
+                      entity: binary_sensor.doorbell_smart_motion_vehicle
+                    style:
+                      top: 8%
+                      left: 16%
+                      color: "#FFD600"
+                      "--mdc-icon-size": 32px
+                      background: rgba(0, 0, 0, 0.45)
+                      border-radius: 50%
+                      padding: 4px
+              - type: conditional
+                conditions:
+                  - entity: binary_sensor.doorbell_smart_motion_vehicle
+                    state_not: "on"
+                elements:
+                  - type: icon
+                    icon: mdi:car
+                    title: No vehicle motion
+                    tap_action:
+                      action: more-info
+                      entity: binary_sensor.doorbell_smart_motion_vehicle
+                    style:
+                      top: 8%
+                      left: 16%
+                      color: "#9E9E9E"
+                      "--mdc-icon-size": 32px
+                      background: rgba(0, 0, 0, 0.45)
+                      border-radius: 50%
+                      padding: 4px
       - type: grid
         cards:
           # Collapsed by default — click the title bar / chevron to expand.
