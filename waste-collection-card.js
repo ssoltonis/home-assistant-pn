@@ -368,7 +368,6 @@ class WasteCollectionCard extends HTMLElement {
 
   _grid(visible, now, monthStart) {
     const grid = this._element("div", undefined, "grid");
-    grid.setAttribute("role", "grid");
     // Monday-first week (Lithuania); weekday names from 2024-01-01 (a Monday).
     for (let i = 0; i < 7; i++) {
       grid.append(this._element("span", this._formatDate(new Date(2024, 0, 1 + i), { weekday: "short" }), "weekday"));
