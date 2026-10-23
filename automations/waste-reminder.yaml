@@ -1,0 +1,89 @@
+# Waste Reminder: Double Notification (corrected version)
+#
+# Paste into Settings > Automations > (existing automation) > ⋮ > Edit in YAML,
+# or add it to automations.yaml as a list item (prefix the first line with "- "
+# and indent the rest by two spaces).
+#
+# Calendar entity: calendar.kauno_svara (not "calendar.kaunosvara").
+#
+# Timing: the offsets assume ALL-DAY events (they start at 00:00 local time):
+#   night_before: start - 3h  -> 21:00 the evening before
+#   same_day:     start + 7h  -> 07:00 on the collection day
+# If the provider ever publishes timed events (e.g. 06:00), the offsets are
+# relative to that time instead (03:00 / 13:00).
+#
+# What changed vs. the previous version:
+# - Removed the "now() - this.attributes.last_triggered > 10" condition. On the
+#   first run last_triggered is None (template error -> run aborted), and with
+#   mode: queued the value can already be the time of the current/previous
+#   queued run, so it either blocked or let through duplicates unpredictably.
+# - Deduplication now uses mode: single + max_exceeded: silent + a trailing
+#   delay. When several events (e.g. mixed waste and plastic) start on the same
+#   day, the calendar trigger fires once per event at the same moment; the first
+#   run sends ONE notification listing every event of that day, the others are
+#   dropped silently while it is still running.
+# - The leading 5 s delay is gone; get_events covers the whole collection day.
+# - clickAction must be a dashboard URL: /<dashboard-url>/<view-path>.
+#   "/lovelace/main_calendar" assumes the default dashboard; replace "lovelace"
+#   with your dashboard's URL (e.g. /dashboard-home/main_calendar). Use
+#   "/calendar" instead to open Home Assistant's built-in Calendar panel.
+id: waste_reminder_double_notification
+alias: 'Waste Reminder: Double Notification'
+description: >-
+  Atliekų surinkimo priminimas iš calendar.kauno_svara: 21:00 dieną prieš ir
+  07:00 surinkimo dieną.
+mode: single
+max_exceeded: silent
+triggers:
+  - trigger: calendar
+    event: start
+    offset: '-3:00:00'
+    entity_id: calendar.kauno_svara
+    id: night_before
+  - trigger: calendar
+    event: start
+    offset: '7:00:00'
+    entity_id: calendar.kauno_svara
+    id: same_day
+conditions: []
+actions:
+  - variables:
+      # Local date of the event start ("YYYY-MM-DD" for all-day events,
+      # "YYYY-MM-DDTHH:MM:SS+03:00" for timed events).
+      collection_day: '{{ trigger.calendar_event.start[:10] }}'
+      click_action: /lovelace/main_calendar
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.kauno_svara
+    data:
+      start_date_time: '{{ collection_day }} 00:00:00'
+      end_date_time: '{{ collection_day }} 23:59:59'
+    response_variable: day_agenda
+  - variables:
+      waste_types: >-
+        {% set events = day_agenda['calendar.kauno_svara'].events
+           if 'calendar.kauno_svara' in day_agenda else [] %}
+        {% set names = events | map(attribute='summary') | select | unique | list %}
+        {{ (names if names else [trigger.calendar_event.summary]) | join(', ') }}
+      title: >-
+        {{ 'Rytoj šiukšlių surinkimas!' if trigger.id == 'night_before'
+           else 'Šiandien šiukšlių surinkimas!' }}
+      message: >-
+        {% if trigger.id == 'night_before' %}Rytoj ({{ collection_day }}) išveš: {{ waste_types }}. Išstumkite konteinerius šiandien vakare.{% else %}Šiandien išveš: {{ waste_types }}. Patikrinkite, ar konteineriai išstumti.{% endif %}
+  - action: notify.mobile_app_pixel_10_pro
+    data:
+      title: '{{ title }}'
+      message: '{{ message }}'
+      data:
+        clickAction: '{{ click_action }}'
+        # Same tag: the 07:00 notification replaces the 21:00 one on the phone.
+        tag: 'waste-{{ collection_day }}'
+        notification_icon: mdi:trash-can-outline
+  - action: persistent_notification.create
+    data:
+      notification_id: waste_reminder
+      title: '{{ title }}'
+      message: '{{ message }}'
+  # Keep the run alive so duplicate triggers (several events at the same start)
+  # are dropped by mode: single.
+  - delay: '00:01:00'
