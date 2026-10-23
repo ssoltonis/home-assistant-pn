@@ -23,6 +23,20 @@ views:
       - type: grid
         column_span: 2
         cards:
+          # Pending waste collection (calendar.kauno_svara) for today and tomorrow,
+          # past events hidden. "Calendar" opens the main_calendar view below.
+          # Load /local/waste-collection-card.js as a JavaScript module resource.
+          - type: custom:waste-collection-card
+            entity: calendar.kauno_svara
+            mode: upcoming
+            title: Waste collection
+            navigation_path: main_calendar
+            grid_options:
+              columns: full
+              rows: auto
+      - type: grid
+        column_span: 2
+        cards:
           - type: heading
             heading: Doorbell
           - type: picture-entity
@@ -334,3 +348,36 @@ views:
           - type: tile
             entity: sensor.wallbox_pulsar_max_ss_cost
             name: Session cost
+
+  # --- Waste collection calendar (calendar.kauno_svara) ---
+  # URL: /<dashboard-url>/main_calendar (e.g. /lovelace/main_calendar). The
+  # waste reminder notification's clickAction points here.
+  - title: Waste
+    path: main_calendar
+    icon: mdi:trash-can-outline
+    show_icon_and_title: true
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        column_span: 2
+        cards:
+          - type: custom:waste-collection-card
+            entity: calendar.kauno_svara
+            mode: upcoming
+            title: Today & tomorrow
+            grid_options:
+              columns: full
+              rows: auto
+      - type: grid
+        column_span: 2
+        cards:
+          # Month grid + list of upcoming events; past events are not shown.
+          # Previous/Next switch months (Previous stops at the current month).
+          - type: custom:waste-collection-card
+            entity: calendar.kauno_svara
+            mode: month
+            title: Waste collection calendar
+            grid_options:
+              columns: full
+              rows: auto

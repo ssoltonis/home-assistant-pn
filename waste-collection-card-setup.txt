@@ -1,0 +1,91 @@
+Waste collection card, calendar view and reminder automation
+
+Entity
+- Everything uses calendar.kauno_svara (the entity your automation uses).
+  "calendar.kaunosvara" (without the underscore) does not exist - check
+  Developer tools > States if the card reports "not available".
+
+Installation (card)
+1. Copy waste-collection-card.js to /config/www/waste-collection-card.js
+   on the Home Assistant server.
+2. In Settings > Dashboards > Resources (enable Advanced Mode in your
+   profile if needed), add /local/waste-collection-card.js?v=1 with
+   resource type JavaScript Module.
+   For YAML-managed resources, add this entry to the existing
+   lovelace.resources list in configuration.yaml:
+     - url: /local/waste-collection-card.js?v=1
+       type: module
+3. Apply dashboard-phase1.yaml to your dashboard and reload the browser
+   or Companion App frontend.
+
+Dashboard
+- Home view, under the weather card: "Waste collection" lists PENDING
+  events for today and tomorrow only (tomorrow matters because the truck
+  comes early in the morning). Shows "No waste collection today or
+  tomorrow." when nothing is pending; add hide_when_empty: true to hide
+  the card instead (this also hides its Calendar button).
+  The Calendar button opens the Waste view (navigation_path: main_calendar).
+- New "Waste" view, path main_calendar:
+  - Today & tomorrow list (same as Home, without the button).
+  - Month calendar: Monday-first grid with event names on their days plus
+    a list of the month's upcoming events. Next/Previous change month;
+    Previous stops at the current month and "This month" jumps back.
+- Past events are never shown: days before today are greyed out without
+  events, and an event disappears once it has ended (all-day events stay
+  visible until midnight of their day).
+
+Why a custom card instead of the built-in calendar card
+- The built-in "type: calendar" card has month navigation but always shows
+  past events and has no today/tomorrow filter; a markdown/conditional card
+  cannot read calendar events without an extra template sensor. If you
+  prefer the built-in month view anyway (past events visible), replace the
+  month card with:
+    - type: calendar
+      initial_view: dayGridMonth
+      entities:
+        - calendar.kauno_svara
+
+Card options (custom:waste-collection-card)
+  entity            required, calendar.* entity
+  mode              upcoming (default) | month
+  title             header text; "" hides it
+  navigation_path   upcoming mode only; shows a Calendar button. A relative
+                    value (main_calendar) opens that view in the CURRENT
+                    dashboard; an absolute one (/lovelace/main_calendar) is
+                    used as-is.
+  hide_when_empty   upcoming mode only, default false
+  refresh_interval  minutes between calendar refetches, default 15. Data is
+                    also refetched when the calendar entity changes, when
+                    the date changes and when the month is switched.
+- Events come from GET /api/calendars/calendar.kauno_svara via
+  hass.callApi, i.e. with the logged-in user's permissions.
+- Today/tomorrow use the device's local time zone (same as HA for you).
+
+Notifications (automations/waste-reminder.yaml)
+- 21:00 the day before ("Rytoj šiukšlių surinkimas!") and 07:00 on the
+  day ("Šiandien šiukšlių surinkimas!") to notify.mobile_app_pixel_10_pro,
+  plus a persistent notification. Message lists all events of that day.
+- Offsets -3:00:00 / 7:00:00 assume all-day events starting at 00:00.
+- Fixes in the old version: the last_triggered condition failed on the
+  first run (None) and with mode: queued was unreliable. Now mode: single,
+  max_exceeded: silent and a 1 minute trailing delay give exactly one
+  notification even if several events start on the same day.
+- Both phone notifications share tag waste-<date>, so the 07:00 one
+  replaces the 21:00 one.
+- clickAction must be /<dashboard-url>/<view-path>. "/main_calendar" alone
+  is not a valid page. The file uses /lovelace/main_calendar (default
+  dashboard); if this dashboard has another URL (shown in the browser
+  address bar, e.g. /dashboard-home/home), change click_action to
+  /dashboard-home/main_calendar. Use /calendar to open HA's built-in
+  Calendar panel instead (it shows past events too).
+- Install: open your existing automation > Edit in YAML and replace its
+  content with the file (or add it to automations.yaml as a list item),
+  save. "Run actions" cannot be used for testing because the actions need
+  trigger.calendar_event; instead create a test event or temporarily
+  change an offset and check Settings > Automations > Traces.
+
+Validation
+Run: node --test *.test.cjs
+(or node waste-collection-card.test.cjs). After installation check the
+Home card with an event tomorrow, press Calendar, and step to next month.
+On updates, replace the JS file and bump the resource's v query value.
