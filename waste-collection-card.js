@@ -2,7 +2,8 @@
 //   mode: upcoming -> pending events for today and tomorrow + "Calendar" button
 //   mode: month    -> month grid + agenda of future events, Previous/Next month
 // Past events are never shown. Event data comes from the calendar REST API
-// (GET /api/calendars/<entity>?start=...&end=...) via hass.callApi.
+// (GET /api/calendars/<entity>?start=...&end=...) via hass.callApi, with the
+// calendar.get_events service (websocket) as a fallback.
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const pad = (n) => String(n).padStart(2, "0");
@@ -19,6 +20,23 @@ const parseMoment = (value) => {
   if (dateOnly) return { date: new Date(+dateOnly[1], +dateOnly[2] - 1, +dateOnly[3]), allDay: true };
   const date = new Date(raw);
   return Number.isNaN(date.getTime()) ? undefined : { date, allDay: false };
+};
+
+// hass.callApi rejects with {error, status_code, body}; body may be JSON or text.
+const describeError = (error) => {
+  if (!error) return "unknown error";
+  if (typeof error === "string") return error;
+  if (error instanceof Error) return error.message || String(error);
+  const body = error.body;
+  const detail = (body && typeof body === "object" && body.message) || (typeof body === "string" && body.trim()) || "";
+  const parts = [error.message || error.error || (error.status_code ? `HTTP ${error.status_code}` : ""), detail]
+    .filter((part, index, list) => part && list.indexOf(part) === index);
+  if (parts.length) return parts.join(" - ");
+  try {
+    return JSON.stringify(error);
+  } catch (_error) {
+    return String(error);
+  }
 };
 
 const normalizeEvents = (items) => {
@@ -175,8 +193,27 @@ class WasteCollectionCard extends HTMLElement {
     this._token = token;
     const path = `calendars/${this._config.entity}?start=${encodeURIComponent(start.toISOString())}`
       + `&end=${encodeURIComponent(end.toISOString())}`;
+    const hass = this._hass;
+    const entity = this._config.entity;
+    let restError;
     Promise.resolve()
-      .then(() => this._hass.callApi("GET", path))
+      .then(() => hass.callApi("GET", path))
+      .catch((error) => {
+        restError = error;
+        if (typeof hass.callWS !== "function") throw error;
+        return hass.callWS({
+          type: "call_service",
+          domain: "calendar",
+          service: "get_events",
+          target: { entity_id: entity },
+          service_data: { start_date_time: start.toISOString(), end_date_time: end.toISOString() },
+          return_response: true,
+        }).then((result) => {
+          const response = result && result.response && result.response[entity];
+          if (!response || !Array.isArray(response.events)) throw error;
+          return response.events;
+        });
+      })
       .then((items) => {
         if (token !== this._token) return;
         this._events = normalizeEvents(items);
@@ -186,7 +223,10 @@ class WasteCollectionCard extends HTMLElement {
       })
       .catch((error) => {
         if (token !== this._token) return;
-        this._error = `Unable to load ${this._config.entity}: ${(error && (error.body && error.body.message || error.message)) || error}`;
+        const reason = restError && restError !== error
+          ? `${describeError(restError)}; calendar.get_events: ${describeError(error)}`
+          : describeError(error);
+        this._error = `Unable to load ${entity}: ${reason}`;
         this._loaded = true;
         this._fetchedAt = 0; // retry on the next hass update after the interval
         this._render();
@@ -410,7 +450,7 @@ class WasteCollectionCard extends HTMLElement {
   }
 }
 
-WasteCollectionCard.helpers = { parseMoment, normalizeEvents, isPending, upcomingEvents, monthEvents, eventDays, relativeDay, dayKey };
+WasteCollectionCard.helpers = { parseMoment, normalizeEvents, isPending, upcomingEvents, monthEvents, eventDays, relativeDay, dayKey, describeError };
 
 customElements.define("waste-collection-card", WasteCollectionCard);
 window.customCards = window.customCards || [];

@@ -54,8 +54,10 @@ const makeHass = (events, calls, options = {}) => ({
   callApi: (method, url) => {
     calls.push({ method, url });
     if (options.fail) return Promise.reject(new Error("Calendar offline"));
+    if (options.httpFail) return Promise.reject({ error: "Response error: 400", status_code: 400, body: "400: Bad Request" });
     return Promise.resolve(typeof events === "function" ? events(url) : events);
   },
+  ...(options.ws ? { callWS: options.ws } : {}),
 });
 const makeCard = (config, now) => {
   const card = new Card();
@@ -153,6 +155,33 @@ const makeCard = (config, now) => {
   await flush();
   assert.equal(byClass(failing, "error")[0].role, "alert");
   assert.match(byClass(failing, "error")[0].textContent, /Calendar offline/);
+  // HA callApi rejects with a plain object, not an Error.
+  const httpFailing = makeCard({}, now);
+  httpFailing.hass = makeHass([], [], { httpFail: true });
+  await flush();
+  assert.doesNotMatch(byClass(httpFailing, "error")[0].textContent, /object Object/);
+  assert.match(byClass(httpFailing, "error")[0].textContent, /400: Bad Request/);
+  // REST failure falls back to the calendar.get_events service.
+  const wsCalls = [];
+  const fallback = makeCard({}, now);
+  fallback.hass = makeHass([], [], {
+    httpFail: true,
+    ws: (msg) => {
+      wsCalls.push(msg);
+      return Promise.resolve({ response: { "calendar.kauno_svara": { events: [
+        { start: "2026-10-24", end: "2026-10-25", summary: "Plastikas" },
+      ] } } });
+    },
+  });
+  await flush();
+  assert.equal(wsCalls[0].service, "get_events");
+  assert.equal(wsCalls[0].return_response, true);
+  assert.equal(byClass(fallback, "error").length, 0);
+  assert.deepEqual(text(fallback, "summary"), ["Plastikas"]);
+  const bothFail = makeCard({}, now);
+  bothFail.hass = makeHass([], [], { httpFail: true, ws: () => Promise.reject({ code: "not_found", message: "Service not found" }) });
+  await flush();
+  assert.match(byClass(bothFail, "error")[0].textContent, /400: Bad Request.*Service not found/);
   const missing = makeCard({}, now);
   missing.hass = makeHass([], [], { missing: true });
   assert.match(byClass(missing, "error")[0].textContent, /not available/);

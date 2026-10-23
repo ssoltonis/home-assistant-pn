@@ -9,11 +9,11 @@ Installation (card)
 1. Copy waste-collection-card.js to /config/www/waste-collection-card.js
    on the Home Assistant server.
 2. In Settings > Dashboards > Resources (enable Advanced Mode in your
-   profile if needed), add /local/waste-collection-card.js?v=1 with
+   profile if needed), add /local/waste-collection-card.js?v=2 with
    resource type JavaScript Module.
    For YAML-managed resources, add this entry to the existing
    lovelace.resources list in configuration.yaml:
-     - url: /local/waste-collection-card.js?v=1
+     - url: /local/waste-collection-card.js?v=2
        type: module
 3. Apply dashboard-phase1.yaml to your dashboard and reload the browser
    or Companion App frontend.
@@ -58,7 +58,9 @@ Card options (custom:waste-collection-card)
                     also refetched when the calendar entity changes, when
                     the date changes and when the month is switched.
 - Events come from GET /api/calendars/calendar.kauno_svara via
-  hass.callApi, i.e. with the logged-in user's permissions.
+  hass.callApi, i.e. with the logged-in user's permissions. If that request
+  fails, the card falls back to the calendar.get_events service over the
+  websocket (the same call the automation uses).
 - Today/tomorrow use the device's local time zone (same as HA for you).
 
 Notifications (automations/waste-reminder.yaml)
@@ -84,8 +86,39 @@ Notifications (automations/waste-reminder.yaml)
   trigger.calendar_event; instead create a test event or temporarily
   change an offset and check Settings > Automations > Traces.
 
+configuration.yaml (Waste Collection Schedule, YAML setup)
+- The waste_collection_schedule: block alone creates the calendar entity
+  (named after the source, "Kauno švara" -> calendar.kauno_svara).
+- Remove this old block, it is redundant - the integration's calendar
+  platform ignores it (it only sets up via discovery):
+    calendar:
+      - platform: waste_collection_schedule
+        name: "Kauno švara"
+  To set the calendar name explicitly, use calendar_title on the source:
+    waste_collection_schedule:
+      sources:
+        - name: grafikai_svara_lt
+          calendar_title: Kauno švara
+          args: ...
+  Restart Home Assistant afterwards and check in Developer tools > States
+  that calendar.kauno_svara still exists.
+
+Troubleshooting "Unable to load calendar.kauno_svara: ..."
+- Card version 1 showed "[object Object]" for HTTP errors; version 2 shows
+  the HTTP status and response text. Replace the JS file and bump the
+  resource to /local/waste-collection-card.js?v=2, then hard-reload
+  (Companion App: Settings > Companion App > Debugging > Reset frontend
+  cache).
+- If the message still appears, both the REST API and the
+  calendar.get_events service failed. Test the service in Developer tools >
+  Actions: calendar.get_events with entity calendar.kauno_svara and a
+  duration of 7 days. If it fails there too, the problem is in the Waste
+  Collection Schedule integration (see Settings > System > Logs), not the
+  card.
+
 Validation
 Run: node --test *.test.cjs
 (or node waste-collection-card.test.cjs). After installation check the
 Home card with an event tomorrow, press Calendar, and step to next month.
-On updates, replace the JS file and bump the resource's v query value.
+On updates, replace the JS file and bump the resource's v query value
+(current: ?v=2).
