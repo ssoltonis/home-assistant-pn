@@ -109,7 +109,13 @@ Troubleshooting "Unable to load calendar.kauno_svara: ..."
   resource to /local/waste-collection-card.js?v=2, then hard-reload
   (Companion App: Settings > Companion App > Debugging > Reset frontend
   cache).
-- If the message still appears, both the REST API and the
+- Still "[object Object]" = the browser still runs version 1 (version 2
+  never prints that). Check: open the browser console (F12) and look for
+  "WASTE-COLLECTION-CARD v2", or open
+  http://<your-ha>:8123/local/waste-collection-card.js?v=2 and search for
+  describeError. If missing, the file in /config/www was not replaced
+  (note: /local/ maps to /config/www/, not /config/www/community/).
+- If a detailed message still appears, both the REST API and the
   calendar.get_events service failed. Test the service in Developer tools >
   Actions: calendar.get_events with entity calendar.kauno_svara and a
   duration of 7 days. If it fails there too, the problem is in the Waste

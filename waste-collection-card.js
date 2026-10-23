@@ -459,3 +459,4 @@ window.customCards.push({
   name: "Waste collection card",
   description: "Upcoming (today/tomorrow) waste collection events or a month calendar without past events.",
 });
+console.info("%c WASTE-COLLECTION-CARD %c v2 ", "background:#2e7d32;color:#fff", "background:#ddd;color:#000");
