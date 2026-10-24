@@ -182,6 +182,25 @@ const makeCard = (config, now) => {
   bothFail.hass = makeHass([], [], { httpFail: true, ws: () => Promise.reject({ code: "not_found", message: "Service not found" }) });
   await flush();
   assert.match(byClass(bothFail, "error")[0].textContent, /400: Bad Request.*Service not found/);
+  // Failed loads are not retried on every hass update.
+  const spamCalls = [];
+  const spam = makeCard({}, now);
+  const spamHass = makeHass([], spamCalls, { fail: true });
+  spam.hass = spamHass;
+  await flush();
+  spam.hass = { ...spamHass };
+  spam.hass = { ...spamHass };
+  await flush();
+  assert.equal(spamCalls.length, 1);
+  // Orphaned (unavailable) calendar entities are not queried.
+  const orphanCalls = [];
+  const orphan = makeCard({}, now);
+  const orphanHass = makeHass([], orphanCalls);
+  orphanHass.states["calendar.kauno_svara"] = { state: "unavailable", last_updated: "1", attributes: { restored: true } };
+  orphan.hass = orphanHass;
+  await flush();
+  assert.equal(orphanCalls.length, 0);
+  assert.match(byClass(orphan, "error")[0].textContent, /unavailable/);
   const missing = makeCard({}, now);
   missing.hass = makeHass([], [], { missing: true });
   assert.match(byClass(missing, "error")[0].textContent, /not available/);

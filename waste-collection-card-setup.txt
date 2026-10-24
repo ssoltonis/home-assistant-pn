@@ -9,11 +9,11 @@ Installation (card)
 1. Copy waste-collection-card.js to /config/www/waste-collection-card.js
    on the Home Assistant server.
 2. In Settings > Dashboards > Resources (enable Advanced Mode in your
-   profile if needed), add /local/waste-collection-card.js?v=2 with
+   profile if needed), add /local/waste-collection-card.js?v=3 with
    resource type JavaScript Module.
    For YAML-managed resources, add this entry to the existing
    lovelace.resources list in configuration.yaml:
-     - url: /local/waste-collection-card.js?v=2
+     - url: /local/waste-collection-card.js?v=3
        type: module
 3. Apply dashboard-phase1.yaml to your dashboard and reload the browser
    or Companion App frontend.
@@ -106,15 +106,30 @@ configuration.yaml (Waste Collection Schedule, YAML setup)
 Troubleshooting "Unable to load calendar.kauno_svara: ..."
 - Card version 1 showed "[object Object]" for HTTP errors; version 2 shows
   the HTTP status and response text. Replace the JS file and bump the
-  resource to /local/waste-collection-card.js?v=2, then hard-reload
+  resource to /local/waste-collection-card.js?v=3, then hard-reload
   (Companion App: Settings > Companion App > Debugging > Reset frontend
   cache).
 - Still "[object Object]" = the browser still runs version 1 (version 2
   never prints that). Check: open the browser console (F12) and look for
-  "WASTE-COLLECTION-CARD v2", or open
-  http://<your-ha>:8123/local/waste-collection-card.js?v=2 and search for
+  "WASTE-COLLECTION-CARD v3", or open
+  http://<your-ha>:8123/local/waste-collection-card.js?v=3 and search for
   describeError. If missing, the file in /config/www was not replaced
   (note: /local/ maps to /config/www/, not /config/www/community/).
+- Log "calendar.get_events: Service call requested response data but did
+  not match any entities" / card says "unavailable": calendar.kauno_svara
+  is only an orphaned placeholder (state unavailable, restored: true) and
+  no calendar entity with that ID is loaded. Typical after removing the old
+  calendar: platform block - the integration then names the calendar after
+  the source. Fix:
+  1. Developer tools > States, filter "calendar." and find the waste
+     calendar that is NOT unavailable (e.g. calendar.grafikai_svara_lt).
+  2. Either add calendar_title: Kauno švara to the source (see above) and
+     restart, or rename that entity to calendar.kauno_svara in
+     Settings > Entities (delete the old unavailable one first).
+     Otherwise change the entity in dashboard-phase1.yaml and
+     automations/waste-reminder.yaml to the real ID.
+  Card v3 no longer retries a failed load on every state update (v2 did,
+  which flooded the log), only every refresh_interval minutes.
 - If a detailed message still appears, both the REST API and the
   calendar.get_events service failed. Test the service in Developer tools >
   Actions: calendar.get_events with entity calendar.kauno_svara and a
@@ -127,4 +142,4 @@ Run: node --test *.test.cjs
 (or node waste-collection-card.test.cjs). After installation check the
 Home card with an event tomorrow, press Calendar, and step to next month.
 On updates, replace the JS file and bump the resource's v query value
-(current: ?v=2).
+(current: ?v=3).

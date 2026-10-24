@@ -188,6 +188,12 @@ class WasteCollectionCard extends HTMLElement {
       this._render();
       return;
     }
+    if (state.state === "unavailable") {
+      // Orphaned registry entry (e.g. restored: true) - no calendar entity to query.
+      this._error = `Entity ${this._config.entity} is unavailable. Check Developer tools > States for the current calendar.* entity ID.`;
+      this._render();
+      return;
+    }
     const { start, end } = this._range(now);
     const token = (this._token || 0) + 1;
     this._token = token;
@@ -228,7 +234,7 @@ class WasteCollectionCard extends HTMLElement {
           : describeError(error);
         this._error = `Unable to load ${entity}: ${reason}`;
         this._loaded = true;
-        this._fetchedAt = 0; // retry on the next hass update after the interval
+        // Retry after refresh_interval (or when the entity changes), not on every hass update.
         this._render();
       });
     if (!this._loaded) this._render();
@@ -459,4 +465,4 @@ window.customCards.push({
   name: "Waste collection card",
   description: "Upcoming (today/tomorrow) waste collection events or a month calendar without past events.",
 });
-console.info("%c WASTE-COLLECTION-CARD %c v2 ", "background:#2e7d32;color:#fff", "background:#ddd;color:#000");
+console.info("%c WASTE-COLLECTION-CARD %c v3 ", "background:#2e7d32;color:#fff", "background:#ddd;color:#000");
