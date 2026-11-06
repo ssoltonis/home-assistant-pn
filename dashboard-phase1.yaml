@@ -110,6 +110,23 @@ views:
                       background: rgba(0, 0, 0, 0.45)
                       border-radius: 50%
                       padding: 4px
+              # Toggle for motion notifications. Requires helper
+              # input_boolean.doorbell_motion_notifications; the notification
+              # automation must use it as a condition (state: "on").
+              - type: state-icon
+                entity: input_boolean.doorbell_motion_notifications
+                title: Motion notifications
+                tap_action:
+                  action: toggle
+                state_color: true
+                style:
+                  top: 8%
+                  right: 6%
+                  left: auto
+                  "--mdc-icon-size": 32px
+                  background: rgba(0, 0, 0, 0.45)
+                  border-radius: 50%
+                  padding: 4px
       - type: grid
         cards:
           # Collapsed by default — click the title bar / chevron to expand.
