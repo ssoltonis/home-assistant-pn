@@ -16,7 +16,7 @@ class Element {
 
 let Card;
 let failLoad = false;
-vm.runInNewContext(fs.readFileSync(`${__dirname}\\power-light-tile-card.js`, "utf8"), {
+vm.runInNewContext(fs.readFileSync(require("path").join(__dirname, "power-light-tile-card.js"), "utf8"), {
   HTMLElement: Element,
   document: { createElement: (tag) => new Element(tag) },
   customElements: { define: (_name, constructor) => { Card = constructor; } },

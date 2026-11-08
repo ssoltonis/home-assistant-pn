@@ -29,7 +29,7 @@ class Element {
 }
 
 let Card;
-vm.runInNewContext(fs.readFileSync(`${__dirname}\\doorbell-records-card.js`, "utf8"), {
+vm.runInNewContext(fs.readFileSync(require("path").join(__dirname, "doorbell-records-card.js"), "utf8"), {
   HTMLElement: Element,
   document: { createElement: (tag) => new Element(tag) },
   customElements: { define: (_name, constructor) => { Card = constructor; } },
